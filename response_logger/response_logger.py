@@ -7,6 +7,7 @@ import datetime
 
 # Initialise time keeping variable
 i = 0
+last = 0
 
 # Connect to Couchbase
 cb = Couchbase.connect(bucket='beer-sample', host='192.168.67.101')
@@ -21,9 +22,11 @@ with open('Responses', 'a') as f:
     offset = after - before # Calculate the response time
     offset = int(offset.microseconds)
 
-    if (offset > 300): # Log any high response times
-      f.write("Response time of "+str(offset)+" at point "+str(i)+"("+str(i/5)+"s)\n")
+    if (offset > 400): # Log any high response times
+
+      f.write("Response time of " + str(offset) + " at point " + str(i) + "(" + str(i/5) + "s) and " + str((i/5)-last) + "s since the last slow response.\n")
       f.flush()
+      last = (i/5)
 
     print offset
     i+=1
