@@ -22,7 +22,8 @@ with open('Responses', 'a') as f:
     offset = int(offset.microseconds)
 
     if (offset > 300): # Log any high response times
-      f.write("Response time of "+str(offset)+"at point"+str(i))
+      f.write("Response time of "+str(offset)+" at point "+str(i)+"("+str(i/5)+"s)\n")
+      f.flush()
 
     print offset
     i+=1
