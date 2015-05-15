@@ -5,15 +5,20 @@ POLLING_INTERVAL = 2
 XDCR_QUEUES = (
 	'replication_changes_left',
 )
-version = 4
 auth = ('Administrator', 'password')
+
 def monitor_xdcr_queues(host_port, bucket):
 	print('Monitoring XDCR queues: {}'.format(bucket))
 	# MB-14366: XDCR stats endpoint changed in 4.0
-	if version >= 4:
-		_wait_for_empty_queues(host_port, bucket, XDCR_QUEUES, get_go_xdcr_stats)
+	try:
+		get_goxdcr_stats(host_port, bucket)
+	except ValueError:
+		# Use default stats function for older builds.
+		stats_function = None
 	else:
-		_wait_for_empty_queues(host_port, bucket, XDCR_QUEUES)
+		stats_function = get_goxdcr_stats
+	_wait_for_empty_queues(host_port, bucket, XDCR_QUEUES,
+								stats_function)
 
 def _wait_for_empty_queues(host_port, bucket, queues, stats_function=None):
 	metrics = list(queues)
@@ -37,7 +42,15 @@ def _wait_for_empty_queues(host_port, bucket, queues, stats_function=None):
 		if metrics:
 			time.sleep(POLLING_INTERVAL)
 
-def get_go_xdcr_stats(host_port, bucket):
+def get(self, **kwargs):
+ 	return requests.get(auth=auth, **kwargs)
+
+def get_bucket_stats(host_port, bucket):
+	api = 'http://{}/pools/default/buckets/{}/stats'.format(host_port,
+															bucket)
+	return get(url=api).json()
+
+def get_goxdcr_stats(host_port, bucket):
 	api = 'http://{}/pools/default/buckets/@goxdcr-{}/stats'.format(host_port,
 																	bucket)
 	return get(url=api).json()
@@ -45,4 +58,4 @@ def get_go_xdcr_stats(host_port, bucket):
 def get(**kwargs):
 	return requests.get(auth = auth, **kwargs)
 
-monitor_xdcr_queues('192.168.46.101:8091', 'default')
+monitor_xdcr_queues('ip:port', 'bucket_name')
